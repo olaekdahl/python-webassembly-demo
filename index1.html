@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Star Wars Characters App</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+</head>
+<body>
+    <button onclick="loadData()">Load Star Wars Characters</button>
+    <pre id="output"></pre>
+
+    <script type="text/javascript">
+        let pyodideReady = false;
+        let pyodide;
+
+        async function main() {
+            pyodide = await loadPyodide({
+                indexURL : "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/"
+            });
+            pyodideReady = true;
+            // Load the requests package
+            await pyodide.loadPackage("micropip");
+            await pyodide.runPythonAsync(`
+                import micropip
+                await micropip.install('requests')
+            `);
+        }
+
+        main();
+
+        async function loadData() {
+            if (!pyodideReady) {
+                alert("Pyodide is not fully loaded yet. Please try again in a few seconds.");
+                return;
+            }
+
+            try {
+                const output = await pyodide.runPythonAsync(`
+                    import requests
+
+                    def fetch_data():
+                        response = requests.get("https://swapi.online/api/characters")
+                        data = response.json()
+                        return data
+
+                    result = fetch_data()
+                    str(result)  # Convert the result to string for JavaScript to handle it
+                `);
+                document.getElementById('output').textContent = output;
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('output').textContent = 'Failed to load data: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
